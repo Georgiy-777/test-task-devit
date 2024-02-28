@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client-Server Fetch</title>
+</head>
+
+<body>
+    <input id="concurrency-limit" type="number" min="0" max="100" required>
+    <button id="start">Start</button>
+    <ul id="results"></ul>
+
+    <script>
+        document.getElementById('start').addEventListener('click', function () {
+            const concurrencyLimit = parseInt(document.getElementById('concurrency-limit').value, 10);
+            this.disabled = true; // Отключаем кнопку
+
+            let activeRequests = 0;
+            let requestIndex = 1;
+            const totalRequests = 1000;
+            let requestsQueue = [];
+
+            // Функция для отправки запроса
+            function sendRequest(index) {
+                activeRequests++;
+                fetch(`http://localhost:5000/api?index=${index}`, {
+                    method: 'GET'
+                }).then(response => response.json())
+                    .then(data => {
+                        document.getElementById('results').innerHTML += `<li>${data.index}</li>`;
+                        activeRequests--;
+                        checkQueue();
+                    }).catch(error => {
+                        console.error('Error:', error);
+                        activeRequests--;
+                        checkQueue();
+                    });
+            }
+
+            // Проверяем и управляем очередью запросов
+            function checkQueue() {
+                while (activeRequests < concurrencyLimit && requestsQueue.length > 0) {
+                    const index = requestsQueue.shift();
+                    sendRequest(index);
+                }
+                if (requestIndex > totalRequests && activeRequests === 0) {
+                    document.getElementById('start').disabled = false; // Включаем кнопку обратно
+                }
+            }
+
+            // Инициализация очереди запросов с учетом лимита запросов в секунду
+            const intervalId = setInterval(() => {
+                for (let i = 0; i < concurrencyLimit && requestIndex <= totalRequests; i++) {
+                    requestsQueue.push(requestIndex++);
+                }
+                checkQueue();
+                if (requestIndex > totalRequests) {
+                    clearInterval(intervalId);
+                }
+            }, 1000);
+        });
+
+    </script>
+</body>
+
+</html>
