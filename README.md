@@ -1,11 +1,11 @@
 ## Description
 
 The Back folder contains the server directory which can be run with 
-                        npm run start
+                      [  npm run start ]
 to start the local server.
 
 The Front folder contains client directory which can be run with 
-                        Live Server
+                       [ Live Server ]
 
 ---------------------------------------------------------------------------------------------------
 
